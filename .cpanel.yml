@@ -1,6 +1,7 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/thepione/public_html/
+    - /bin/cp index.html $DEPLOYPATH
     - /bin/cp app.py $DEPLOYPATH
     - /bin/cp DadJokeGen.py $DEPLOYPATH
     - /bin/cp DadJokeGenrequirements.txt $DEPLOYPATH
