@@ -3,5 +3,7 @@ deployment:
     - export DEPLOYPATH=/home/thepione/public_html/
     - /bin/cp index.html $DEPLOYPATH
     - /bin/cp app.py $DEPLOYPATH
+    - /bin/cp pythontest.py $DEPLOYPATH
     - /bin/cp DadJokeGen.py $DEPLOYPATH
+    - /bin/cp requirements.txt $DEPLOYPATH
     - /bin/cp DadJokeGenrequirements.txt $DEPLOYPATH
