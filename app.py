@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, render_template_string
-
+import requests  # 👈 Added requests import
 from pythontest import DadJokeGenerator
 
 app = Flask(__name__)
@@ -43,7 +43,7 @@ PAGE = """<!doctype html>
     <section class="ratings" aria-label="Rate this joke">
       <div>Rate this joke</div>
       <div class="stars">
-        {% for rating in range(1, 6) %}<button type="button" data-rating="{{ rating }}" aria-label="{{ rating }} out of 5">&#9733;</button>{% endfor %}
+        {% for rating in range(1, 6) %}<button type="button" data-rating="{{ rating }}" aria-label="{{ rating }} out of 5">★</button>{% endfor %}
       </div>
     </section>
     <div id="message" role="status"></div>
@@ -60,19 +60,28 @@ PAGE = """<!doctype html>
       const url = selected ? `/api/joke?category=${encodeURIComponent(selected)}` : '/api/joke';
       const response = await fetch(url);
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+      if (!response.ok) throw new Error(data.error || "Failed to fetch joke");
       currentJoke = data;
       setup.textContent = data.setup;
       punchline.textContent = data.punchline;
       message.textContent = '';
     }
 
-    document.querySelector('#joke-button').addEventListener('click', () => getJoke().catch(error => message.textContent = error.message));
+    document.querySelector('#joke-button').addEventListener('click', () => getJoke().catch(error => {
+      setup.textContent = "Error loading joke.";
+      punchline.textContent = "";
+      message.textContent = error.message;
+    }));
+    
     document.querySelectorAll('[data-rating]').forEach(button => button.addEventListener('click', async () => {
       if (!currentJoke) { message.textContent = 'Get a joke before rating it.'; return; }
-      const response = await fetch('/api/rate', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ joke: [currentJoke.setup, currentJoke.punchline], rating: Number(button.dataset.rating) }) });
-      const data = await response.json();
-      message.textContent = data.message || data.error;
+      try {
+        const response = await fetch('/api/rate', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ joke: [currentJoke.setup, currentJoke.punchline], rating: Number(button.dataset.rating) }) });
+        const data = await response.json();
+        message.textContent = data.message || data.error;
+      } catch (err) {
+        message.textContent = "Failed to submit rating.";
+      }
     }));
   </script>
 </body>
@@ -81,16 +90,31 @@ PAGE = """<!doctype html>
 
 @app.get("/")
 def index():
-    return render_template_string(PAGE, categories=generator.get_all_categories())
+    try:
+        categories = generator.get_all_categories()
+    except Exception:
+        categories = [] # Fallback if generator fails on startup
+    return render_template_string(PAGE, categories=categories)
 
 
 @app.get("/api/joke")
 def joke():
     category = request.args.get("category")
-    setup, punchline = (generator.get_random_joke() if not category else generator.get_joke_by_category(category))
-    if not setup:
-        return jsonify(error=punchline), 400
-    return jsonify(setup=setup, punchline=punchline)
+    
+    # Safely try to get a joke from pythontest.py. 
+    # If pythontest crashes, this catches it and sends proper JSON back to the browser.
+    try:
+        if not category:
+            setup, punchline = generator.get_random_joke()
+        else:
+            setup, punchline = generator.get_joke_by_category(category)
+            
+        if not setup:
+            return jsonify(error=punchline), 400
+        return jsonify(setup=setup, punchline=punchline)
+        
+    except Exception as e:
+        return jsonify(error=f"Backend Error: {str(e)}"), 500
 
 
 @app.post("/api/rate")
@@ -101,11 +125,16 @@ def rate():
         joke_tuple = tuple(data["joke"])
     except (KeyError, TypeError, ValueError):
         return jsonify(error="Provide a joke and a rating from 1-5."), 400
-    result = generator.rate_joke(joke_tuple, rating)
-    if rating not in range(1, 6):
-        return jsonify(error=result), 400
-    return jsonify(message=result)
+        
+    try:
+        result = generator.rate_joke(joke_tuple, rating)
+        if rating not in range(1, 6):
+            return jsonify(error=result), 400
+        return jsonify(message=result)
+    except Exception as e:
+        return jsonify(error=f"Rating Error: {str(e)}"), 500
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # Enabled debug=True so you can see actual error logs in your terminal
+    app.run(host="0.0.0.0", port=5000, debug=True)
