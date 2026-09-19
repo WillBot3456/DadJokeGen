@@ -1,3 +1,5 @@
+import random
+
 from flask import Flask, jsonify, request, render_template_string
 from pythontest import DadJokeGenerator
 
@@ -98,13 +100,15 @@ def index():
 def joke():
     category = request.args.get("category")
     try:
-        if not category:
-            setup, punchline = generator.get_random_joke()
+        if category:
+            if category not in generator.jokes:
+                valid = ", ".join(generator.jokes.keys())
+                return jsonify(error=f"Sorry, '{category}' isn't a valid category. Try: {valid}"), 400
+            jokes = generator.jokes[category]
         else:
-            setup, punchline = generator.get_joke_by_category(category)
-            
-        if not setup:
-            return jsonify(error=punchline), 400
+            jokes = [joke for group in generator.jokes.values() for joke in group]
+
+        setup, punchline = random.choice(jokes)
         return jsonify(setup=setup, punchline=punchline)
     except Exception as e:
         return jsonify(error=f"Joke retrieval error: {str(e)}"), 500
@@ -129,4 +133,5 @@ def rate():
         return jsonify(error=f"Rating system error: {str(e)}"), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=4800, debug=True)
+
