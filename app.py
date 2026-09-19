@@ -58,7 +58,8 @@ PAGE = """<!doctype html>
 
     async function getJoke() {
       const selected = category.value;
-      const url = selected ? `/api/joke?category=${encodeURIComponent(selected)}` : '/api/joke';
+      const BaseURL = window.location.origin;
+      const url = selected ? `${BaseURL}/api/joke?category=${encodeURIComponent(selected)}` : `${BaseURL}/api/joke`;
       const response = await fetch(url);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch joke");
@@ -77,7 +78,8 @@ PAGE = """<!doctype html>
     document.querySelectorAll('[data-rating]').forEach(button => button.addEventListener('click', async () => {
       if (!currentJoke) { message.textContent = 'Get a joke before rating it.'; return; }
       try {
-        const response = await fetch('/api/rate', { 
+        const BaseURL = window.location.origin;
+        const response = await fetch(`${BaseURL}/api/rate`, {
           method: 'POST', 
           headers: {'Content-Type': 'application/json'}, 
           body: JSON.stringify({ joke: [currentJoke.setup, currentJoke.punchline], rating: Number(button.dataset.rating) }) 
