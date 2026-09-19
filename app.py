@@ -6,7 +6,7 @@ from pythontest import DadJokeGenerator
 
 app = Flask(__name__)
 generator = DadJokeGenerator()
-CORS(app, resources={r"/api/*": {"origins": "https://thepioneersnest.com"}})
+CORS(app, resources={r"/api/*": {"origins": "https://www.thepioneersnest.com"}})
 
 
 PAGE = """<!doctype html>
@@ -58,12 +58,12 @@ PAGE = """<!doctype html>
     const punchline = document.querySelector('#punchline');
     const message = document.querySelector('#message');
     const category = document.querySelector('#category');
-    const BaseURL = 'https://thepioneersnest.com';
+    const BaseURL = 'https://www.thepioneersnest.com';
 
     async function getJoke() {
       const selected = category.value;
       const url = selected ? `${BaseURL}/api/joke?category=${encodeURIComponent(selected)}` : `${BaseURL}/api/joke`;
-      const response = await fetch(url, {credentials: 'omit'});
+      const response = await fetch(url, {credentials: 'same-origin'});
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch joke");
       currentJoke = data;
@@ -83,7 +83,7 @@ PAGE = """<!doctype html>
       try {
         const response = await fetch(`${BaseURL}/api/rate`, {
           method: 'POST', 
-          credentials: 'omit',
+          credentials: 'same-origin',
           headers: {'Content-Type': 'application/json'}, 
           body: JSON.stringify({ joke: [currentJoke.setup, currentJoke.punchline], rating: Number(button.dataset.rating) }) 
         });
