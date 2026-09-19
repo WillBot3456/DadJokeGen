@@ -1,10 +1,13 @@
 import random
 
 from flask import Flask, jsonify, request, render_template_string
+from flask_cors import CORS
 from pythontest import DadJokeGenerator
 
 app = Flask(__name__)
 generator = DadJokeGenerator()
+CORS(app, resources={r"/api/*": {"origins": "https://thepioneersnest.com"}})
+
 
 PAGE = """<!doctype html>
 <html lang="en">
