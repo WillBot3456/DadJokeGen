@@ -60,7 +60,7 @@ PAGE = """<!doctype html>
     async function getJoke() {
       const selected = category.value;
       const url = selected ? `${BaseURL}/api/joke?category=${encodeURIComponent(selected)}` : `${BaseURL}/api/joke`;
-      const response = await fetch(url);
+      const response = await fetch(url, {credentials: 'omit'});
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch joke");
       currentJoke = data;
@@ -80,6 +80,7 @@ PAGE = """<!doctype html>
       try {
         const response = await fetch(`${BaseURL}/api/rate`, {
           method: 'POST', 
+          credentials: 'omit',
           headers: {'Content-Type': 'application/json'}, 
           body: JSON.stringify({ joke: [currentJoke.setup, currentJoke.punchline], rating: Number(button.dataset.rating) }) 
         });
@@ -134,5 +135,5 @@ def rate():
         return jsonify(error=f"Rating system error: {str(e)}"), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=4800, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
