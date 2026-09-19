@@ -55,10 +55,10 @@ PAGE = """<!doctype html>
     const punchline = document.querySelector('#punchline');
     const message = document.querySelector('#message');
     const category = document.querySelector('#category');
+    const BaseURL = 'https://thepioneersnest.com';
 
     async function getJoke() {
       const selected = category.value;
-      const BaseURL = window.location.origin;
       const url = selected ? `${BaseURL}/api/joke?category=${encodeURIComponent(selected)}` : `${BaseURL}/api/joke`;
       const response = await fetch(url);
       const data = await response.json();
@@ -78,7 +78,6 @@ PAGE = """<!doctype html>
     document.querySelectorAll('[data-rating]').forEach(button => button.addEventListener('click', async () => {
       if (!currentJoke) { message.textContent = 'Get a joke before rating it.'; return; }
       try {
-        const BaseURL = window.location.origin;
         const response = await fetch(`${BaseURL}/api/rate`, {
           method: 'POST', 
           headers: {'Content-Type': 'application/json'}, 
